@@ -52,7 +52,7 @@ const getAllRFPs = async (req, res, next) => {
     }
 
     const rfps = await RFP.find(filter)
-      .populate('created_by', 'username full_name company_name')
+      // .populate('created_by', 'username full_name company_name')
       .sort({ created_at: -1 })
       .skip(skip)
       .limit(limit);
