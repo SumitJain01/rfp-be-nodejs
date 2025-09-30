@@ -37,7 +37,7 @@ app.use(compression()); // Compress responses
 
 // CORS configuration
 const allowedOrigins = [
-  'https://rfp-fe-nextjs-bh37l8vqz-sumitjaini1998gmailcoms-projects.vercel.app',
+  'https://rfp-fe-nextjs.vercel.app/',
   'http://localhost:3000',
   'http://localhost:3001',
   'https://localhost:3000',
