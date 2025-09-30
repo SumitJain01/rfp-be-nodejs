@@ -137,21 +137,24 @@ app.use('*', (req, res) => {
 // Global error handling middleware (must be last)
 app.use(errorHandler);
 
-// Start server
-const PORT = process.env.PORT || 8000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}`);
-  console.log(`❤️  Health check: http://localhost:${PORT}/health`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
-  server.close(() => {
-    console.log('✅ Process terminated');
+// Start server only if not in Vercel environment
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+  const PORT = process.env.PORT || 8000;
+  const server = app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 API URL: http://localhost:${PORT}`);
+    console.log(`❤️  Health check: http://localhost:${PORT}/health`);
   });
-});
 
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('🛑 SIGTERM received, shutting down gracefully');
+    server.close(() => {
+      console.log('✅ Process terminated');
+    });
+  });
+}
+
+// Export the app for Vercel serverless functions
 module.exports = app;
