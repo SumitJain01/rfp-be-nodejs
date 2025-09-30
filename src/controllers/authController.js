@@ -12,6 +12,10 @@ const User = require('../models/User');
  * Generate JWT token for user
  */
 const generateToken = (userId) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  
   return jwt.sign(
     { userId },
     process.env.JWT_SECRET,
