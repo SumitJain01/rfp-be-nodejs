@@ -1,4 +1,3 @@
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -38,13 +37,12 @@ app.use(compression()); // Compress responses
 
 // CORS configuration
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
   'https://rfp-fe-nextjs-bh37l8vqz-sumitjaini1998gmailcoms-projects.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001',
   'https://localhost:3000',
   'https://localhost:3001'
-].filter(Boolean); // Remove undefined values
+];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -78,8 +76,8 @@ app.use(cors({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000, // 15 minutes
-  max: process.env.RATE_LIMIT_MAX_REQUESTS || 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
   message: {
     error: 'Too many requests from this IP, please try again later.'
   }
@@ -87,7 +85,8 @@ const limiter = rateLimit({
 app.use('/api', limiter);
 
 // Logging middleware
-if (process.env.NODE_ENV === 'development') {
+const NODE_ENV = 'development';
+if (NODE_ENV === 'development') {
   app.use(morgan('dev'));
 } else {
   app.use(morgan('combined'));
@@ -106,7 +105,7 @@ app.get('/health', (req, res) => {
     status: 'OK',
     message: 'RFP Management API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: 'development'
   });
 });
 
@@ -138,11 +137,13 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // Start server only if not in Vercel environment
-if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
-  const PORT = process.env.PORT || 8000;
+// const NODE_ENV = 'development';
+const VERCEL = '0';
+if (NODE_ENV !== 'production' || VERCEL !== '1') {
+  const PORT = 8000;
   const server = app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📍 Environment: ${NODE_ENV}`);
     console.log(`🌐 API URL: http://localhost:${PORT}`);
     console.log(`❤️  Health check: http://localhost:${PORT}/health`);
   });

@@ -27,7 +27,8 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const JWT_SECRET = '7979384fb634f6affd5455d439b3e7bf57edb18c248ccc09d56b739dab2fcf0aeb00d5eb237aca0c0d809f2cbe2b4945ca6c004f8c986c9133e6b6c6ecd6533f';
+    const decoded = jwt.verify(token, JWT_SECRET);
     
     // Find user by ID from token
     const user = await User.findById(decoded.userId);
@@ -108,7 +109,8 @@ const optionalAuth = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const JWT_SECRET = '7979384fb634f6affd5455d439b3e7bf57edb18c248ccc09d56b739dab2fcf0aeb00d5eb237aca0c0d809f2cbe2b4945ca6c004f8c986c9133e6b6c6ecd6533f';
+    const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.userId);
     
     if (user && user.is_active) {
