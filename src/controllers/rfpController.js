@@ -160,11 +160,11 @@ const updateRFP = async (req, res, next) => {
       });
     }
 
-    // Check if RFP can be updated
-    if (rfp.status === 'closed' || rfp.status === 'cancelled') {
+    // Check if RFP can be updated (only allow status changes for closed/cancelled RFPs)
+    if ((rfp.status === 'closed' || rfp.status === 'cancelled') && !req.body.status) {
       return res.status(400).json({
         error: 'Cannot update RFP',
-        message: 'Cannot update closed or cancelled RFPs'
+        message: 'Cannot update closed or cancelled RFPs unless changing status'
       });
     }
 
@@ -325,6 +325,78 @@ const closeRFP = async (req, res, next) => {
 };
 
 /**
+ * Update RFP Status
+ * PUT /api/rfps/:id/status
+ */
+const updateRFPStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const rfp = await RFP.findById(req.params.id);
+
+    if (!rfp) {
+      return res.status(404).json({
+        error: 'RFP not found',
+        message: 'The requested RFP does not exist'
+      });
+    }
+
+    // Check if user owns the RFP
+    if (rfp.created_by.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        error: 'Access denied',
+        message: 'You can only update your own RFPs'
+      });
+    }
+
+    // Validate status transition
+    const validTransitions = {
+      'draft': ['published', 'cancelled'],
+      'published': ['closed', 'cancelled'],
+      'closed': ['cancelled'], // Allow reopening closed RFPs as cancelled
+      'cancelled': [] // No transitions from cancelled
+    };
+
+    if (!validTransitions[rfp.status].includes(status)) {
+      return res.status(400).json({
+        error: 'Invalid status transition',
+        message: `Cannot change status from ${rfp.status} to ${status}. Valid transitions: ${validTransitions[rfp.status].join(', ')}`
+      });
+    }
+
+    // Additional business rules
+    if (status === 'published' && rfp.status === 'draft') {
+      // Set published_at when publishing
+      rfp.published_at = new Date();
+    }
+
+    if (status === 'closed' && rfp.status === 'published') {
+      // When closing, check if deadline has passed
+      if (rfp.deadline > new Date()) {
+        return res.status(400).json({
+          error: 'Cannot close RFP',
+          message: 'Cannot close RFP before the deadline'
+        });
+      }
+    }
+
+    // Update status
+    rfp.status = status;
+    await rfp.save();
+
+    // Populate creator information
+    await rfp.populate('created_by', 'username full_name company_name');
+
+    res.json({
+      message: `RFP status updated to ${status} successfully`,
+      data: rfp
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get RFP responses
  * GET /api/rfps/:id/responses
  */
@@ -366,6 +438,7 @@ module.exports = {
   getRFPById,
   createRFP,
   updateRFP,
+  updateRFPStatus,
   deleteRFP,
   publishRFP,
   closeRFP,

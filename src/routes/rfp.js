@@ -4,6 +4,7 @@ const {
   getRFPById,
   createRFP,
   updateRFP,
+  updateRFPStatus,
   deleteRFP,
   publishRFP,
   closeRFP,
@@ -13,8 +14,10 @@ const { authenticate, authorize, optionalAuth } = require('../middleware/auth');
 const {
   validateRFP,
   validateObjectId,
-  validatePagination
+  validatePagination,
+  handleValidationErrors
 } = require('../middleware/validation');
+const { body } = require('express-validator');
 
 /**
  * RFP Routes
@@ -59,8 +62,23 @@ router.put('/:id', [
   authenticate,
   authorize('buyer'),
   validateObjectId('id'),
-  validateRFP
+  // validateRFP
 ], updateRFP);
+
+/**
+ * @route   PUT /api/rfps/:id/status
+ * @desc    Update RFP status
+ * @access  Private (Owner only)
+ */
+router.put('/:id/status', [
+  authenticate,
+  authorize('buyer'),
+  validateObjectId('id'),
+  body('status')
+    .isIn(['draft', 'published', 'closed', 'cancelled'])
+    .withMessage('Status must be one of: draft, published, closed, cancelled'),
+  handleValidationErrors
+], updateRFPStatus);
 
 /**
  * @route   DELETE /api/rfps/:id
